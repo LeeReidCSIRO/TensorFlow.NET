@@ -64,7 +64,8 @@ namespace Tensorflow
         /// <param name="name"></param>
         /// <returns></returns>
         public static Tensor arg_min(Tensor input, int dimension, TF_DataType output_type = TF_DataType.TF_INT64, string name = null)
-            => tf.OpDefLib._apply_op_helper("ArgMin", name, args: new { input, dimension, output_type }).outputs[0];
+            => tf.Context.ExecuteOp("ArgMin", name, new ExecuteOpArgs(input, dimension)
+                .SetAttributes(new { output_type }));
 
         /// <summary>
         /// Computes Psi, the derivative of Lgamma (the log of the absolute value of
@@ -476,8 +477,11 @@ namespace Tensorflow
             return _op.outputs[0];
         }
 
-        public static Tensor _max<Tx, Ty>(Tx input, Ty axis, bool keep_dims = false, string name = null)
-            => tf.Context.ExecuteOp("Max", name, new ExecuteOpArgs(input, axis)
+        /// <summary>
+        /// Subroutine for Min or Max functions. See _min and _max
+        /// </summary>
+        private static Tensor MinOrMax<Tx, Ty>(Tx input, Ty axis, string methodName, bool keep_dims = false, string name = null)
+            => tf.Context.ExecuteOp(methodName, name, new ExecuteOpArgs(input, axis)
             {
                 GetGradientAttrs = (op) => new
                 {
@@ -487,12 +491,12 @@ namespace Tensorflow
                 }
             }.SetAttributes(new { keep_dims, reduction_indices = axis }));
 
-        public static Tensor _min<Tx, Ty>(Tx input, Ty axis, bool keep_dims = false, string name = null)
-        {
-            var _op = tf.OpDefLib._apply_op_helper("Min", name, new { input, reduction_indices = axis, keep_dims });
+        public static Tensor _max<Tx, Ty>(Tx input, Ty axis, bool keep_dims = false, string name = null)
+            => MinOrMax(input, axis, "Max", keep_dims: keep_dims, name: name);
 
-            return _op.outputs[0];
-        }
+        public static Tensor _min<Tx, Ty>(Tx input, Ty axis, bool keep_dims = false, string name = null)
+            => MinOrMax(input, axis, "Min", keep_dims: keep_dims, name: name);
+
 
         public static Tensor pow<Tx, Ty>(Tx x, Ty y, string name = null)
             => tf.Context.ExecuteOp("Pow", name, new ExecuteOpArgs(x, y));
