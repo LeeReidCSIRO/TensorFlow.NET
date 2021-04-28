@@ -123,7 +123,7 @@ namespace Tensorflow.Gradients
 
                             if (unaggregated_grads.Count * size * 4 > kMinAggregateBytes)
                             {
-                                throw new NotImplementedException("");
+                                //throw new NotImplementedException("");
                             }
                         }
                     }
